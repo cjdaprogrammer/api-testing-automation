@@ -1,5 +1,6 @@
+
 from fastapi import FastAPI, HTTPException, status
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 app = FastAPI(
@@ -13,6 +14,13 @@ class TaskCreate(BaseModel):
     title: str = Field(min_length=1, max_length=100)
     description: str = Field(default="", max_length=500)
     completed: bool = False
+
+    @field_validator("title")
+    @classmethod
+    def title_must_not_be_blank(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("Title must not be blank or whitespace only")
+        return value
 
 
 class Task(TaskCreate):

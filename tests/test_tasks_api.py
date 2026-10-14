@@ -189,3 +189,25 @@ def test_empty_task_list_returns_empty_array(client):
 
     assert response.status_code == 200
     assert response.json() == []
+
+
+@pytest.mark.parametrize(
+    "title",
+    [
+        "",
+        " ",
+        "A" * 101,
+    ],
+    ids=[
+        "empty-title",
+        "whitespace-title",
+        "title-over-100-characters",
+    ],
+)
+def test_create_task_with_invalid_titles_returns_422(client, title):
+    response = client.post(
+        "/tasks",
+        json={"title": title},
+    )
+
+    assert response.status_code == 422
