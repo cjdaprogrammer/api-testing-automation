@@ -28,6 +28,7 @@ jobs:
 
       - name: Run pytest API tests with coverage
         run: |
+          mkdir -p reports
           pytest -v \
             --cov=app \
             --cov-report=term-missing \
@@ -53,8 +54,30 @@ jobs:
       - name: Install Postman CLI
         run: npm install -g postman-cli
 
+      - name: Start API server
+        run: |
+          mkdir -p reports
+          nohup uvicorn app.main:app --host 127.0.0.1 --port 8000 > reports/api.log 2>&1 &
+          for i in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:8000/health; then
+              echo "API server is ready."
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "API server failed to start."
+          cat reports/api.log
+          exit 1
+
       - name: Run Postman API collection
         run: |
           postman collection run ./postman/Task_Management_API.postman_collection.json \
-            --no-report-events \
-            --output ./reports/postman
+            --no-report-events
+
+      - name: Upload Postman server log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: postman-api-server-log
+          path: reports/api.log
+          if-no-files-found: warn
