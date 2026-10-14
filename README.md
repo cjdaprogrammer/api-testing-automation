@@ -194,3 +194,25 @@ These results reflect the reported development runs. Check the latest CI run for
 Junior QA Engineer portfolio project demonstrating API automation, test design, validation, reporting, and continuous integration.
 
 **Repository:** https://github.com/cjdaprogrammer/api-testing-automation
+
+## Test Evidence
+
+### Automated Test Results
+
+The latest local test run completed with **33 passed and 0 failed**.
+
+![Pytest HTML report showing 33 passed tests](docs/evidence/pytest-results.png)
+
+### Code Coverage
+
+The coverage report shows **100% statement coverage** for the application module.
+
+![Coverage report showing 100% coverage](docs/evidence/coverage-report.png)
+
+### Continuous Integration
+
+GitHub Actions successfully completed the latest workflow run on the `main` branch.
+
+![GitHub Actions workflow completed successfully](docs/evidence/github-actions.png)
+
+> Note: Statement coverage measures executed statements; it does not guarantee that the application is free of defects.
