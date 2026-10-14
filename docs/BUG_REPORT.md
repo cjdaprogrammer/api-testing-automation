@@ -1,136 +1,87 @@
-\# Bug Report — Task Management API
 
+# Bug Report — Task Management API
 
-
-\## Bug ID
+## Bug ID
 
 API-BUG-001
 
+## Title
 
+API accepted a task title containing only whitespace
 
-\## Title
+## Severity
 
-API accepts a task title containing only whitespace
+Medium — accepting a title without meaningful content can result in invalid task data.
 
+## Priority
 
+High — required-field validation should be reliable before release.
 
-\## Severity
+## Status
 
-Medium — invalid task data could be accepted if input validation fails.
+Fixed — validation was implemented and regression tests were added.
 
+## Environment
 
+- Application: Task Management API
+- Framework: FastAPI
+- Language: Python 3.11
+- Validation: Pydantic
+- Test framework: Pytest
+- Test type: REST API functional and regression testing
 
-\## Priority
+## Preconditions
 
-High — input validation should be corrected before release.
+The task creation endpoint is available and can receive JSON requests.
 
+## Steps to Reproduce
 
+1. Send a POST request to `/tasks`.
+2. Submit a title containing only spaces.
+3. Inspect the HTTP response.
 
-\## Status
-
-Fixed — regression tests added.
-
-
-
-\## Environment
-
-\- Application: Task Management API
-
-\- Framework: FastAPI
-
-\- Language: Python 3.11
-
-\- Test framework: Pytest
-
-\- Test type: REST API functional testing
-
-
-
-\## Preconditions
-
-The API test client is available, and the task creation endpoint can be accessed.
-
-
-
-\## Steps to Reproduce
-
-1\. Send a POST request to `/tasks`.
-
-2\. Submit a title containing only spaces.
-
-3\. Observe the HTTP response.
-
-
-
-Example request:
-
-
+### Example Request
 
 ```json
-
 {
-
-&#x20; "title": "   ",
-
-&#x20; "description": "Whitespace validation test",
-
-&#x20; "completed": false
-
+  "title": "   ",
+  "description": "Whitespace validation test",
+  "completed": false
 }
-
 ```
 
+## Expected Result
 
+The API rejects the request with HTTP 422 because the title contains no meaningful text.
 
-\## Expected Result
+## Original Actual Result
 
-The API should reject the request with HTTP 422 because the title contains no meaningful text.
+During development testing, whitespace-only titles were identified as an input-validation defect.
 
-
-
-\## Actual Result
-
-During testing, whitespace-only titles were identified as an input-validation defect. The application was updated to reject titles that contain only whitespace.
-
-
-
-\## Root Cause
+## Root Cause
 
 The original validation checked the title's length but did not ensure that the title contained a non-whitespace character.
 
+## Fix Implemented
 
+A Pydantic field validator was added to reject a title when `value.strip()` is empty.
 
-\## Fix Implemented
+The validator prevents titles containing only spaces or other surrounding whitespace from being accepted.
 
-A Pydantic field validator was added to reject titles when `value.strip()` is empty.
+## Regression Testing
 
+The automated suite includes checks for:
 
+- Empty titles
+- Whitespace-only titles
+- Titles exceeding the maximum permitted length
+- Invalid task update payloads
+- Preservation of existing task data after a rejected update
 
-\## Regression Testing
+## Verification
 
-The automated test suite includes checks for:
+The reported automated test suite has passed after the validation changes. Re-run the suite when modifying this behavior to verify that the defect remains fixed.
 
-\- Empty titles
+## QA Conclusion
 
-\- Whitespace-only titles
-
-\- Titles exceeding the maximum length
-
-\- Invalid task update payloads
-
-\- Preservation of existing task data after a rejected update
-
-
-
-\## Verification
-
-The fix should be verified by running the current Pytest suite and confirming that all tests pass.
-
-
-
-\## QA Conclusion
-
-The validation defect was addressed, and regression tests help prevent the same issue from returning in future changes.
-
-
-
+The validation defect was addressed in the application, and regression tests help prevent it from returning. This report documents the original issue and its implemented fix.
