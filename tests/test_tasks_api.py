@@ -234,3 +234,22 @@ def test_update_task_with_whitespace_title_returns_422(client, sample_task):
     assert unchanged.json()["title"] == sample_task["title"]
     assert unchanged.json()["completed"] is False
 
+
+def test_created_task_response_has_expected_schema(client, sample_task):
+    response = client.post("/tasks", json=sample_task)
+
+    assert response.status_code == 201
+
+    data = response.json()
+
+    assert set(data.keys()) == {
+        "id",
+        "title",
+        "description",
+        "completed",
+    }
+    assert isinstance(data["id"], int)
+    assert isinstance(data["title"], str)
+    assert isinstance(data["description"], str)
+    assert isinstance(data["completed"], bool)
+
