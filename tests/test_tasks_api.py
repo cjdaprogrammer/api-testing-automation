@@ -288,3 +288,104 @@ def test_update_task_with_invalid_payload_returns_422(
     assert current.json()["title"] == sample_task["title"]
     assert current.json()["completed"] is False
 
+# Additional boundary and input-validation tests
+
+
+def test_create_task_with_one_character_title_returns_201(client):
+    response = client.post(
+        "/tasks",
+        json={"title": "A"},
+    )
+
+    assert response.status_code == 201
+    assert response.json()["title"] == "A"
+
+
+def test_create_task_with_exactly_100_character_title_returns_201(client):
+    title = "A" * 100
+
+    response = client.post(
+        "/tasks",
+        json={"title": title},
+    )
+
+    assert response.status_code == 201
+    assert response.json()["title"] == title
+    assert len(response.json()["title"]) == 100
+
+
+def test_create_task_with_description_at_500_characters_returns_201(client):
+    description = "D" * 500
+
+    response = client.post(
+        "/tasks",
+        json={
+            "title": "Boundary test",
+            "description": description,
+        },
+    )
+
+    assert response.status_code == 201
+    assert response.json()["description"] == description
+    assert len(response.json()["description"]) == 500
+
+
+def test_create_task_with_description_over_500_characters_returns_422(client):
+    response = client.post(
+        "/tasks",
+        json={
+            "title": "Boundary test",
+            "description": "D" * 501,
+        },
+    )
+
+    assert response.status_code == 422
+
+
+def test_create_task_with_numeric_description_returns_422(client):
+    response = client.post(
+        "/tasks",
+        json={
+            "title": "Invalid description",
+            "description": 12345,
+        },
+    )
+
+    assert response.status_code == 422
+
+
+def test_create_task_with_empty_json_object_returns_422(client):
+    response = client.post("/tasks", json={})
+
+    assert response.status_code == 422
+
+
+def test_get_task_with_non_numeric_id_returns_422(client):
+    response = client.get("/tasks/not-a-number")
+
+    assert response.status_code == 422
+
+
+def test_update_task_with_description_over_500_characters_returns_422(
+    client, sample_task
+):
+    created = client.post("/tasks", json=sample_task).json()
+
+    response = client.put(
+        f"/tasks/{created['id']}",
+        json={
+            "title": "Updated task",
+            "description": "D" * 501,
+            "completed": True,
+        },
+    )
+
+    assert response.status_code == 422
+
+    # Invalid input must not change the stored task.
+    current = client.get(f"/tasks/{created['id']}")
+
+    assert current.status_code == 200
+    assert current.json()["title"] == sample_task["title"]
+    assert current.json()["description"] == sample_task["description"]
+    assert current.json()["completed"] is False

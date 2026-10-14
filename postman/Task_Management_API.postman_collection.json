@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "Task Management API",
-    "description": "Postman collection for functional, positive, and negative API testing of the Task Management API.",
+    "description": "Postman collection for functional, positive, negative, and boundary API testing of the Task Management API.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
@@ -35,6 +35,7 @@
             "value": "application/json"
           }
         ],
+        "url": "{{baseUrl}}/tasks",
         "body": {
           "mode": "raw",
           "raw": "{\n  \"title\": \"Test task from Postman\",\n  \"description\": \"Created during API testing\",\n  \"completed\": false\n}",
@@ -43,8 +44,7 @@
               "language": "json"
             }
           }
-        },
-        "url": "{{baseUrl}}/tasks"
+        }
       },
       "event": [
         {
@@ -125,6 +125,7 @@
             "value": "application/json"
           }
         ],
+        "url": "{{baseUrl}}/tasks/{{taskId}}",
         "body": {
           "mode": "raw",
           "raw": "{\n  \"title\": \"Updated task from Postman\",\n  \"description\": \"Updated during API testing\",\n  \"completed\": true\n}",
@@ -133,8 +134,7 @@
               "language": "json"
             }
           }
-        },
-        "url": "{{baseUrl}}/tasks/{{taskId}}"
+        }
       },
       "event": [
         {
@@ -227,6 +227,7 @@
             "value": "application/json"
           }
         ],
+        "url": "{{baseUrl}}/tasks",
         "body": {
           "mode": "raw",
           "raw": "{\n  \"title\": \"\",\n  \"description\": \"Invalid empty title\",\n  \"completed\": false\n}",
@@ -235,8 +236,7 @@
               "language": "json"
             }
           }
-        },
-        "url": "{{baseUrl}}/tasks"
+        }
       },
       "event": [
         {
@@ -260,6 +260,7 @@
             "value": "application/json"
           }
         ],
+        "url": "{{baseUrl}}/tasks",
         "body": {
           "mode": "raw",
           "raw": "{\n  \"title\": \"   \",\n  \"description\": \"Invalid whitespace-only title\",\n  \"completed\": false\n}",
@@ -268,8 +269,7 @@
               "language": "json"
             }
           }
-        },
-        "url": "{{baseUrl}}/tasks"
+        }
       },
       "event": [
         {
@@ -293,9 +293,42 @@
             "value": "application/json"
           }
         ],
+        "url": "{{baseUrl}}/tasks",
         "body": {
           "mode": "raw",
           "raw": "{\n  \"description\": \"Title field is missing\",\n  \"completed\": false\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Missing title returns 422', function () { pm.response.to.have.status(422); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "12 - Accept Maximum Title Length",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"{{title100}}\",\n  \"description\": \"Boundary test\",\n  \"completed\": false\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -306,11 +339,148 @@
       },
       "event": [
         {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.variables.set('title100', 'A'.repeat(100));"
+            ]
+          }
+        },
+        {
           "listen": "test",
           "script": {
             "type": "text/javascript",
             "exec": [
-              "pm.test('Missing title returns 422', function () { pm.response.to.have.status(422); });"
+              "pm.test('Status is 201 Created', function () { pm.response.to.have.status(201); });",
+              "pm.test('Title contains exactly 100 characters', function () { pm.expect(pm.response.json().title).to.have.lengthOf(100); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "13 - Reject Title Over Maximum Length",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"{{title101}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "{{baseUrl}}/tasks"
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.variables.set('title101', 'A'.repeat(101));"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 422 Unprocessable Entity', function () { pm.response.to.have.status(422); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "14 - Accept Maximum Description Length",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"Maximum description test\",\n  \"description\": \"{{description500}}\",\n  \"completed\": false\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "{{baseUrl}}/tasks"
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.variables.set('description500', 'D'.repeat(500));"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 201 Created', function () { pm.response.to.have.status(201); });",
+              "pm.test('Description contains exactly 500 characters', function () { pm.expect(pm.response.json().description).to.have.lengthOf(500); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "15 - Reject Description Over Maximum Length",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"Oversized description test\",\n  \"description\": \"{{description501}}\",\n  \"completed\": false\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "{{baseUrl}}/tasks"
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.variables.set('description501', 'D'.repeat(501));"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 422 Unprocessable Entity', function () { pm.response.to.have.status(422); });"
             ]
           }
         }
