@@ -253,3 +253,38 @@ def test_created_task_response_has_expected_schema(client, sample_task):
     assert isinstance(data["description"], str)
     assert isinstance(data["completed"], bool)
 
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        {"title": ""},
+        {"title": "   "},
+        {"title": "A" * 101},
+        {"title": "Valid title", "completed": "not-a-boolean"},
+    ],
+    ids=[
+        "empty-title",
+        "whitespace-title",
+        "title-too-long",
+        "invalid-completed-type",
+    ],
+)
+def test_update_task_with_invalid_payload_returns_422(
+    client, sample_task, payload
+):
+    created = client.post("/tasks", json=sample_task).json()
+
+    response = client.put(
+        f"/tasks/{created['id']}",
+        json=payload,
+    )
+
+    assert response.status_code == 422
+
+    # An invalid update must not change the existing task.
+    current = client.get(f"/tasks/{created['id']}")
+
+    assert current.status_code == 200
+    assert current.json()["title"] == sample_task["title"]
+    assert current.json()["completed"] is False
+
