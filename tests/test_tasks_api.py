@@ -211,3 +211,26 @@ def test_create_task_with_invalid_titles_returns_422(client, title):
     )
 
     assert response.status_code == 422
+
+
+def test_update_task_with_whitespace_title_returns_422(client, sample_task):
+    created = client.post("/tasks", json=sample_task).json()
+
+    response = client.put(
+        f"/tasks/{created['id']}",
+        json={
+            "title": "   ",
+            "description": "This update should be rejected",
+            "completed": True,
+        },
+    )
+
+    assert response.status_code == 422
+
+    # Verify that the original task remains unchanged.
+    unchanged = client.get(f"/tasks/{created['id']}")
+
+    assert unchanged.status_code == 200
+    assert unchanged.json()["title"] == sample_task["title"]
+    assert unchanged.json()["completed"] is False
+
