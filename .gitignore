@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Environment variables
+.env
+.env.*
+
+# Pytest and coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Generated reports
+reports/*
+!reports/.gitkeep
+
+# Editor and operating system
+.vscode/
+.D
