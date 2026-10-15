@@ -1,24 +1,26 @@
-
 # API Testing Automation — Test Plan
 
 ## 1. Project Overview
 
-**Project Name:** API Testing Automation  
-**Application:** Task Management REST API  
-**Framework:** FastAPI  
-**Programming Language:** Python 3.11  
-**Test Framework:** Pytest  
-**HTTP Testing:** FastAPI TestClient / HTTPX  
-**Reporting:** pytest-html  
-**Code Coverage:** pytest-cov  
-**API Collection Testing:** Postman CLI  
-**CI/CD:** GitHub Actions
+| Item | Details |
+|---|---|
+| Project | API Testing Automation |
+| Application | Task Management REST API |
+| Framework | FastAPI |
+| Programming language | Python 3.11 |
+| Test framework | pytest |
+| HTTP testing | FastAPI TestClient / HTTPX |
+| Reporting | pytest-html |
+| Code coverage | pytest-cov |
+| API collection testing | Postman CLI |
+| CI/CD | GitHub Actions |
+| Database | SQLite with SQLAlchemy |
 
 ### Objective
 
-Validate the functionality, input validation, error handling, and data integrity of the Task Management API using automated API tests.
+Validate the Task Management API's functionality, input validation, error handling, response structure, and data integrity through repeatable automated tests.
 
-The project demonstrates practical quality assurance skills through positive testing, negative testing, boundary-value analysis, regression testing, reporting, and continuous integration.
+The project demonstrates positive testing, negative testing, boundary-value analysis, regression testing, database testing, reporting, and continuous integration.
 
 ## 2. Scope of Testing
 
@@ -31,20 +33,21 @@ The project demonstrates practical quality assurance skills through positive tes
 - Empty and whitespace-only title validation
 - Minimum and maximum title length
 - Description length boundaries
-- Invalid data types
-- Missing and malformed request data
+- Invalid data types and malformed request data
 - Existing and nonexistent task IDs
 - Response structure and data types
 - Data integrity after rejected update requests
+- Database persistence and session cleanup
 - Postman collection execution
 - Automated test reporting and code coverage
+- GitHub Actions workflow execution
 
 ### Out of Scope
 
 - Authentication and authorization
-- Production database integration
+- Production database deployment and migration validation
 - Load and stress testing
-- Security penetration testing
+- Comprehensive security and penetration testing
 - Third-party integrations
 - Production deployment validation
 
@@ -52,31 +55,32 @@ The project demonstrates practical quality assurance skills through positive tes
 
 | Component | Configuration |
 |---|---|
-| Operating System | Windows / GitHub Actions Linux runner |
-| Programming Language | Python 3.11 |
-| API Framework | FastAPI |
-| Test Framework | Pytest |
-| HTTP Client | FastAPI TestClient / HTTPX |
+| Operating system | Windows locally; Ubuntu GitHub Actions runner |
+| Programming language | Python 3.11 |
+| API framework | FastAPI |
+| Test framework | pytest |
+| HTTP client | FastAPI TestClient / HTTPX |
+| Database | SQLite with SQLAlchemy |
 | Reporting | pytest-html |
 | Coverage | pytest-cov |
-| API Collection | Postman CLI |
+| API collection | Postman CLI |
 | CI/CD | GitHub Actions |
 
 ## 4. API Endpoints Under Test
 
 | Method | Endpoint | Expected Behavior |
 |---|---|---|
-| GET | `/` | Returns API welcome information |
-| GET | `/health` | Returns healthy status |
+| GET | `/` | Returns API information |
+| GET | `/health` | Returns a healthy status |
 | POST | `/tasks` | Creates a task |
-| GET | `/tasks` | Returns all tasks |
+| GET | `/tasks` | Returns the task collection |
 | GET | `/tasks/{task_id}` | Returns a task by ID |
 | PUT | `/tasks/{task_id}` | Updates an existing task |
 | DELETE | `/tasks/{task_id}` | Deletes an existing task |
 
 ## 5. Test Scenarios
 
-### A. Health and Root Endpoints
+### A. Root and Health Endpoints
 
 - Verify the root endpoint returns HTTP 200.
 - Verify the health endpoint returns HTTP 200.
@@ -95,6 +99,7 @@ The project demonstrates practical quality assurance skills through positive tes
 - Verify invalid field types are rejected.
 - Verify an empty JSON object is rejected.
 - Verify returned task fields and data types are correct.
+- Verify a rejected create request does not persist a task.
 
 ### C. Task Retrieval
 
@@ -116,25 +121,34 @@ The project demonstrates practical quality assurance skills through positive tes
 ### E. Task Deletion
 
 - Verify an existing task can be deleted.
-- Verify successful deletion returns the expected message.
+- Verify successful deletion returns the expected response.
 - Verify a deleted task can no longer be retrieved.
 - Verify deleting a nonexistent task returns HTTP 404.
 
-### F. Postman and CI/CD
+### F. Database Behavior
+
+- Verify task data persists across separate database sessions.
+- Verify updates remain persisted.
+- Verify deleted records remain absent.
+- Verify database sessions are cleaned up during normal and exceptional execution paths.
+
+### G. Postman and CI/CD
 
 - Verify the Postman collection executes successfully.
-- Verify request assertions pass.
-- Verify GitHub Actions executes the automated checks.
-- Verify test reports are uploaded as workflow artifacts when generated.
+- Verify the collection's request assertions pass.
+- Verify GitHub Actions executes the configured automated checks.
+- Verify reports are uploaded as workflow artifacts when generated.
 
 ## 6. Expected HTTP Status Codes
 
 | Status Code | Meaning | Example |
 |---|---|---|
-| 200 | OK | Retrieve or update a task |
-| 201 | Created | Create a task successfully |
-| 404 | Not Found | Request a nonexistent task |
-| 422 | Unprocessable Entity | Submit invalid input |
+| 200 | OK | Successful retrieval or update |
+| 201 | Created | Successful task creation |
+| 404 | Not Found | Request for a nonexistent task |
+| 422 | Unprocessable Entity | Invalid request data |
+
+These are the expected status codes for the scenarios listed above. Actual behavior should be confirmed against the running API.
 
 ## 7. Test Data
 
@@ -162,75 +176,90 @@ The project demonstrates practical quality assurance skills through positive tes
 | description | 501 characters | HTTP 422 |
 | description | Numeric value | HTTP 422 |
 | Request body | Empty object | HTTP 422 |
-| task_id | Nonnumeric value | HTTP 422 |
+| task ID | Nonnumeric value | HTTP 422 |
 
 ## 8. Test Execution Procedure
 
-1. Install project dependencies.
-2. Execute the Pytest suite.
-3. Review failures and investigate defects.
+1. Install the project dependencies.
+2. Run the automated pytest suite.
+3. Investigate any failed tests.
 4. Generate an HTML test report.
-5. Review code coverage.
-6. Execute the Postman collection against a running API.
-7. Commit and push approved changes.
-8. Verify the GitHub Actions workflow.
+5. Review the coverage report.
+6. Run the Postman collection against the API.
+7. Record the actual results and warnings.
+8. Commit and push approved changes.
+9. Verify the GitHub Actions workflow.
 
-### Run Pytest with HTML Report and Coverage
+### Run pytest with coverage and HTML reporting
+
+From the project root in PowerShell:
 
 ```powershell
-.\.venv\Scripts\python.exe -m pytest -v --cov=app --cov-report=term-missing --cov-report=html:reports/coverage --html=reports/report.html --self-contained-html
+New-Item -ItemType Directory -Force reports | Out-Null
+
+python -m pytest tests -v `
+  --cov=app `
+  --cov-report=term-missing `
+  --cov-report=html:reports/coverage `
+  --html=reports/report.html `
+  --self-contained-html
 ```
 
-### Run Postman Collection
+### Run the Postman collection
 
-Start the API in one PowerShell terminal:
+Start the API in one terminal:
 
 ```powershell
-.\.venv\Scripts\python.exe -m uvicorn app.main:app --reload
+python -m uvicorn app.main:app --reload
 ```
 
 In a second terminal, from the project root:
 
 ```powershell
-postman collection run .\postman\Task_Management_API.postman_collection.json --reporters cli
+postman collection run .\postman\Task_Management_API.postman_collection.json
 ```
+
+Review the command output to confirm the actual request and assertion results.
 
 ## 9. Entry Criteria
 
 - Python and project dependencies are installed.
-- The application can be imported.
+- The application can be imported and started.
 - Test files and the Postman collection are available.
 - The required test environment is accessible.
 
 ## 10. Exit Criteria
 
 - Automated test execution is complete.
-- Failures have been investigated.
-- Regression tests cover confirmed defects.
+- Failures have been investigated and documented.
+- Confirmed defects have appropriate regression tests.
 - Coverage and test reports have been reviewed.
-- Postman checks have been executed.
-- GitHub Actions completes successfully.
+- Postman checks have been executed and reviewed.
+- GitHub Actions completes successfully for the intended change.
 
 ## 11. Risks and Limitations
 
-- Tasks are stored in memory; restarting the application resets the data.
-- The tests use a controlled test environment.
-- Authentication, authorization, production database behavior, performance, and penetration testing are outside the current scope.
-- Passing tests does not guarantee the absence of all defects.
+- SQLite is used for persistence; production database deployment and migration behavior are outside the current scope.
+- Authentication and authorization are not implemented.
+- Load, stress, and comprehensive security testing are outside the documented scope.
+- Passing tests and high statement coverage do not guarantee the absence of defects.
+- Test results may vary with dependency versions and environment configuration.
 
 ## 12. Test Results
 
-Record results from the latest actual execution. Do not treat historical results as a new run.
+Execution metrics belong in `docs/TEST_EXECUTION_REPORT.md`.
 
-- **Pytest result:** See the latest terminal output.
-- **Postman result:** See the latest Postman CLI output.
-- **Code coverage:** See the latest coverage report.
-- **CI/CD result:** See the latest GitHub Actions run.
+For the latest results, review:
 
-Refer to `TEST_EXECUTION_REPORT.md` for the recorded execution summary.
+- Pytest terminal output
+- Postman CLI output
+- Coverage report
+- GitHub Actions workflow run
+
+Historical results should not be presented as results from a new execution.
 
 ## 13. Conclusion
 
-This test plan defines the scope, endpoints, test data, validation scenarios, execution procedures, and completion criteria for the Task Management API.
+This test plan defines the scope, endpoints, test data, validation scenarios, execution procedures, entry criteria, exit criteria, and limitations for the Task Management API.
 
-It demonstrates a structured approach to API quality assurance using Python, Pytest, FastAPI, Postman, test reporting, code coverage, and continuous integration.
+It demonstrates a structured approach to API quality assurance using Python, pytest, FastAPI, SQLite, Postman, test reporting, code coverage, and continuous integration.
