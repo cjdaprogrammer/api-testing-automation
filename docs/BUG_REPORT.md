@@ -1,4 +1,3 @@
-
 # Bug Report — Task Management API
 
 ## Bug ID
@@ -27,6 +26,7 @@ Fixed — validation was implemented and regression tests were added.
 - Framework: FastAPI
 - Language: Python 3.11
 - Validation: Pydantic
+- Database: SQLAlchemy with SQLite
 - Test framework: Pytest
 - Test type: REST API functional and regression testing
 
@@ -64,24 +64,25 @@ The original validation checked the title's length but did not ensure that the t
 
 ## Fix Implemented
 
-A Pydantic field validator was added to reject a title when `value.strip()` is empty.
+A Pydantic field validator was added to reject titles when `value.strip()` is empty.
 
-The validator prevents titles containing only spaces or other surrounding whitespace from being accepted.
+This prevents titles containing only whitespace from being accepted.
 
 ## Regression Testing
 
-The automated suite includes checks for:
+Automated tests cover:
 
 - Empty titles
 - Whitespace-only titles
 - Titles exceeding the maximum permitted length
 - Invalid task update payloads
 - Preservation of existing task data after a rejected update
+- Confirmation that a rejected create request does not create a task
 
 ## Verification
 
-The reported automated test suite has passed after the validation changes. Re-run the suite when modifying this behavior to verify that the defect remains fixed.
+The latest confirmed local suite reported 49 passing tests. The regression tests help verify that the whitespace-validation defect remains fixed.
 
 ## QA Conclusion
 
-The validation defect was addressed in the application, and regression tests help prevent it from returning. This report documents the original issue and its implemented fix.
+The validation defect was addressed in the application and regression tests were added to reduce the risk of recurrence. The report documents the defect, expected behavior, implemented fix, and verification approach.

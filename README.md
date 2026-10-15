@@ -1,55 +1,79 @@
-# Task Management API — Test Automation Portfolio
+# API Testing Automation
 
-![API Testing](https://img.shields.io/badge/API-Testing-blue)
-![Python](https://img.shields.io/badge/Python-3.11-blue)
-![Pytest](https://img.shields.io/badge/Framework-Pytest-green)
-![Postman](https://img.shields.io/badge/API%20Testing-Postman-orange)
+A portfolio project demonstrating REST API testing, automated regression testing, input validation, database persistence, and test reporting using Python and pytest.
 
-[![API Testing Automation](https://github.com/cjdaprogrammer/api-testing-automation/actions/workflows/tests.yml/badge.svg)](https://github.com/cjdaprogrammer/api-testing-automation/actions/workflows/tests.yml)
+## Project Overview
 
-## Overview
+This project tests a Task Management API built with FastAPI and SQLAlchemy. It includes automated tests for CRUD operations, request validation, error handling, response schemas, and database integrity.
 
-This project demonstrates automated REST API testing for a Task Management API built with FastAPI. It focuses on validating API functionality, HTTP status codes, input validation, error handling, and CRUD operations.
+The goal is to demonstrate practical software quality assurance (QA) skills through repeatable, documented automated tests.
 
-The project combines automated Python tests, Postman collection testing, code coverage reporting, and continuous integration through GitHub Actions.
+## Test Results
 
-**Portfolio objective:** demonstrate practical QA automation skills relevant to a Junior QA Engineer role.
+Latest local test execution:
 
-## Technology Stack
+- **49 tests passed**
+- **100% statement coverage**
+- **87 of 87 executable statements covered**
+- Execution time: approximately 5.63 seconds
+- One Starlette deprecation warning
+
+> Coverage measures which executable statements were run. It does not guarantee that the application is defect-free or that every possible behavior has been tested.
+
+## Technologies
 
 - Python 3.11
 - FastAPI
-- Pytest
-- HTTPX
-- Pytest-Cov
-- Pytest-HTML
-- Postman CLI
+- SQLAlchemy
+- SQLite
+- pytest
+- HTTPX / FastAPI TestClient
+- pytest-cov
+- pytest-html
+- Postman
 - Git and GitHub
-- GitHub Actions
 
 ## Features Tested
 
-- API health check and root endpoint
+### API functionality
+- Root and health endpoints
 - Create, retrieve, update, and delete tasks
-- Retrieve all tasks and individual tasks by ID
-- Successful and unsuccessful HTTP responses
-- Missing, empty, whitespace-only, and oversized titles
-- Description length boundaries
-- Invalid input types and request payloads
-- Nonexistent resources and deleted tasks
-- Data integrity after invalid update attempts
-- Automatic test execution in CI
+- Successful and unsuccessful responses
+- Task IDs and response schemas
+
+### Negative testing
+- Missing required fields
+- Empty and whitespace-only titles
+- Invalid data types
+- Malformed JSON
+- Nonexistent task IDs
+- Invalid task payloads
+- Rejected requests and data integrity
+
+### Boundary-value testing
+- One-character task titles
+- Titles at the 100-character limit
+- Titles exceeding the permitted length
+- Descriptions at the 500-character limit
+- Descriptions exceeding the permitted length
+
+### Database testing
+- Task creation and persistence across database sessions
+- Task update persistence
+- Deleted records remaining absent
+- Database session cleanup on normal and exceptional paths
 
 ## Project Structure
 
 ```text
 api-testing-automation/
-├── .github/
-│   └── workflows/
-│       └── tests.yml
 ├── app/
 │   ├── __init__.py
+│   ├── database.py
 │   └── main.py
+├── tests/
+│   ├── test_database.py
+│   └── test_tasks_api.py
 ├── docs/
 │   ├── TEST_PLAN.md
 │   ├── BUG_REPORT.md
@@ -57,162 +81,104 @@ api-testing-automation/
 ├── postman/
 │   └── Task_Management_API.postman_collection.json
 ├── reports/
-├── tests/
-│   ├── __init__.py
-│   └── test_tasks_api.py
-├── .gitignore
-├── pytest.ini
+│   └── report.html
+├── .github/
+│   └── workflows/
+│       └── tests.yml
 ├── requirements.txt
 └── README.md
 ```
 
-## Getting Started
+*The structure above reflects the expected project layout; adjust it if your actual files differ.*
 
-### 1. Clone the repository
+## Installation
+
+Clone the repository and navigate to the project directory.
 
 ```bash
 git clone https://github.com/cjdaprogrammer/api-testing-automation.git
 cd api-testing-automation
 ```
 
-### 2. Create a virtual environment
+Create and activate a virtual environment.
 
-```bash
-python -m venv .venv
-```
-
-Activate it on Windows PowerShell:
+**Windows PowerShell**
 
 ```powershell
+python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 ```
 
-### 3. Install dependencies
+Install the project dependencies.
 
-```bash
-python -m pip install --upgrade pip
-pip install -r requirements.txt
+```powershell
+python -m pip install -r requirements.txt
 ```
 
-### 4. Run automated tests
+## Run the Automated Tests
 
-```bash
-python -m pytest -v
+Run the complete test suite:
+
+```powershell
+python -m pytest tests -v
 ```
 
-### 5. Generate HTML and coverage reports
+Generate a coverage summary:
 
-```bash
-python -m pytest -v --cov=app --cov-report=term-missing --cov-report=html:reports/coverage --html=reports/report.html --self-contained-html
+```powershell
+python -m pytest tests --cov=app --cov-report=term-missing
 ```
 
-After a successful run, open the reports:
+Generate HTML reports:
 
-- Pytest HTML report: `reports/report.html`
-- Coverage report: `reports/coverage/index.html`
-
-These reports are generated locally and are not necessarily committed to the repository.
-
-## Run the API Locally
-
-Start the development server:
-
-```bash
-uvicorn app.main:app --reload
+```powershell
+python -m pytest tests --cov=app --cov-report=html --html=reports/report.html --self-contained-html
 ```
 
-Available endpoints:
+The test report is written to `reports/report.html`, and the coverage report is written to `htmlcov/index.html`.
+
+## API Endpoints
 
 | Method | Endpoint | Purpose |
 |---|---|---|
 | GET | `/` | API information |
 | GET | `/health` | Health check |
 | POST | `/tasks` | Create a task |
-| GET | `/tasks` | Retrieve all tasks |
+| GET | `/tasks` | List tasks |
 | GET | `/tasks/{task_id}` | Retrieve a task |
 | PUT | `/tasks/{task_id}` | Update a task |
 | DELETE | `/tasks/{task_id}` | Delete a task |
 
-Interactive API documentation is available at `http://127.0.0.1:8000/docs`.
+Interactive API documentation is available at `/docs` when the FastAPI application is running.
 
-**Note:** The current implementation stores tasks in memory. Data resets when the application restarts, so this project is intended as a testing portfolio demonstration rather than a production persistence solution.
+## QA Documentation
 
-## Postman Collection
-
-The repository includes a Postman collection with 15 requests covering positive scenarios, negative scenarios, CRUD operations, and input-length boundaries.
-
-Start the API server in one terminal. In another terminal, run:
-
-```bash
-postman collection run ./postman/Task_Management_API.postman_collection.json --reporters cli
-```
-
-The collection uses `http://127.0.0.1:8000` as its default base URL. The Postman CLI must be installed and available in your terminal.
+- `docs/TEST_PLAN.md` — test scope, approach, and test scenarios.
+- `docs/BUG_REPORT.md` — documented defects and reproducible findings.
+- `docs/TEST_EXECUTION_REPORT.md` — execution results and coverage evidence.
 
 ## Continuous Integration
 
-GitHub Actions automatically runs the project's automated checks when configured push or pull-request events occur.
+The repository includes a GitHub Actions workflow intended to run automated tests. Verify the workflow's current configuration and its latest GitHub Actions run before claiming that CI is passing.
 
-The workflow installs dependencies, runs pytest with coverage and HTML reporting, uploads reports as artifacts, starts the API server, and executes the Postman collection.
+## Skills Demonstrated
 
-See the [GitHub Actions workflow](https://github.com/cjdaprogrammer/api-testing-automation/actions/workflows/tests.yml) for execution results.
-
-## QA Approach
-
-This project demonstrates several testing techniques:
-
-- **Functional testing:** verify API behavior against expected results.
-- **Positive testing:** submit valid requests and verify successful responses.
-- **Negative testing:** submit invalid requests and verify appropriate errors.
-- **Boundary-value analysis:** test values at and beyond defined input limits.
-- **Data integrity testing:** verify invalid updates do not modify existing task data.
-- **Regression testing:** rerun automated tests after code changes.
-- **CI testing:** execute automated checks through GitHub Actions.
-
-## Project Results
-
-Latest results previously reported during development:
-
-- **33 pytest tests passed**
-- **100% statement coverage** for `app/main.py`
-- **15 Postman requests** passing
-- **GitHub Actions workflow:** green
-
-These results reflect the reported development runs. Check the latest CI run for the current verified results.
-
-## Future Improvements
-
-- Add persistent database storage.
-- Introduce authentication and authorization tests.
-- Add API response-time checks.
-- Add environment-specific configuration.
-- Expand schema and security validation.
-- Add tests against a deployed staging environment.
+- REST API testing
+- Positive and negative testing
+- Boundary-value analysis
+- Equivalence partitioning
+- Data validation and integrity testing
+- Automated regression testing
+- Python and pytest
+- SQLAlchemy and SQLite
+- Test reporting and code coverage
+- QA documentation
 
 ## Author
 
-Junior QA Engineer portfolio project demonstrating API automation, test design, validation, reporting, and continuous integration.
+**Clark James De Luna**
 
-**Repository:** https://github.com/cjdaprogrammer/api-testing-automation
+- GitHub: https://github.com/cjdaprogrammer
+- Portfolio: https://cj-portfolio-lemon.vercel.app
 
-## Test Evidence
-
-### Automated Test Results
-
-The latest local test run completed with **33 passed and 0 failed**.
-
-![Pytest HTML report showing 33 passed tests](docs/evidence/pytest-results.png)
-
-### Code Coverage
-
-The coverage report shows **100% statement coverage** for the application module.
-
-![Coverage report showing 100% coverage](docs/evidence/coverage-report.png)
-
-### Continuous Integration
-
-GitHub Actions successfully completed the latest workflow run on the `main` branch.
-
-![GitHub Actions workflow completed successfully](docs/evidence/github-actions.png)
-
-> Note: Statement coverage measures executed statements; it does not guarantee that the application is free of defects.
+This project is part of my portfolio as an aspiring Junior QA Engineer, demonstrating practical API testing, automation, and software quality assurance skills.

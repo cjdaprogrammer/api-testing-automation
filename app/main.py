@@ -1,13 +1,20 @@
+from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException, status
-from pydantic import BaseModel, Field, field_validator
+from fastapi import Depends, FastAPI, HTTPException, status
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+from sqlalchemy import Boolean, Integer, String, select
+from sqlalchemy.orm import Mapped, Session, mapped_column
+
+from app.database import Base, engine, get_db
 
 
-app = FastAPI(
-    title="Task Management API",
-    description="A portfolio project for REST API testing automation.",
-    version="1.0.0",
-)
+class TaskRecord(Base):
+    __tablename__ = "tasks"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    title: Mapped[str] = mapped_column(String(100), nullable=False)
+    description: Mapped[str] = mapped_column(String(500), default="", nullable=False)
+    completed: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
 
 class TaskCreate(BaseModel):
@@ -23,12 +30,27 @@ class TaskCreate(BaseModel):
         return value
 
 
-class Task(TaskCreate):
+class TaskResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
+    title: str
+    description: str
+    completed: bool
 
 
-tasks: dict[int, Task] = {}
-next_task_id = 1
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    Base.metadata.create_all(bind=engine)
+    yield
+
+
+app = FastAPI(
+    title="Task Management API",
+    description="A portfolio project for REST API testing automation.",
+    version="2.0.0",
+    lifespan=lifespan,
+)
 
 
 @app.get("/")
@@ -44,25 +66,31 @@ def health_check():
     return {"status": "healthy"}
 
 
-@app.post("/tasks", status_code=status.HTTP_201_CREATED)
-def create_task(task_data: TaskCreate):
-    global next_task_id
-
-    task = Task(id=next_task_id, **task_data.model_dump())
-    tasks[next_task_id] = task
-    next_task_id += 1
-
+@app.post(
+    "/tasks",
+    response_model=TaskResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_task(
+    task_data: TaskCreate,
+    db: Session = Depends(get_db),
+):
+    task = TaskRecord(**task_data.model_dump())
+    db.add(task)
+    db.commit()
+    db.refresh(task)
     return task
 
 
-@app.get("/tasks")
-def get_tasks():
-    return list(tasks.values())
+@app.get("/tasks", response_model=list[TaskResponse])
+def get_tasks(db: Session = Depends(get_db)):
+    statement = select(TaskRecord).order_by(TaskRecord.id)
+    return db.scalars(statement).all()
 
 
-@app.get("/tasks/{task_id}")
-def get_task(task_id: int):
-    task = tasks.get(task_id)
+@app.get("/tasks/{task_id}", response_model=TaskResponse)
+def get_task(task_id: int, db: Session = Depends(get_db)):
+    task = db.get(TaskRecord, task_id)
 
     if task is None:
         raise HTTPException(
@@ -73,28 +101,39 @@ def get_task(task_id: int):
     return task
 
 
-@app.put("/tasks/{task_id}")
-def update_task(task_id: int, task_data: TaskCreate):
-    if task_id not in tasks:
+@app.put("/tasks/{task_id}", response_model=TaskResponse)
+def update_task(
+    task_id: int,
+    task_data: TaskCreate,
+    db: Session = Depends(get_db),
+):
+    task = db.get(TaskRecord, task_id)
+
+    if task is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Task not found",
         )
 
-    updated_task = Task(id=task_id, **task_data.model_dump())
-    tasks[task_id] = updated_task
+    for field, value in task_data.model_dump().items():
+        setattr(task, field, value)
 
-    return updated_task
+    db.commit()
+    db.refresh(task)
+    return task
 
 
 @app.delete("/tasks/{task_id}")
-def delete_task(task_id: int):
-    if task_id not in tasks:
+def delete_task(task_id: int, db: Session = Depends(get_db)):
+    task = db.get(TaskRecord, task_id)
+
+    if task is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Task not found",
         )
 
-    del tasks[task_id]
+    db.delete(task)
+    db.commit()
 
     return {"message": "Task deleted successfully"}
